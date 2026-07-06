@@ -23,15 +23,20 @@ import quality
 ROOT = Path(__file__).resolve().parent.parent
 STATUS_PATH = ROOT / "data" / "processed" / "status.json"
 LOG_DIR = ROOT / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+handlers = [logging.StreamHandler()]
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    handlers.append(logging.FileHandler(LOG_DIR / "pipeline.log"))
+except (PermissionError, OSError) as e:
+    # Don't let an unwritable log directory take the whole app down —
+    # console logging (visible in `docker logs` / Render's log stream) still works.
+    print(f"[WARN] Could not open log file, falling back to console-only logging: {e}")
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "pipeline.log"),
-        logging.StreamHandler(),
-    ],
+    handlers=handlers,
 )
 log = logging.getLogger("etl")
 
