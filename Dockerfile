@@ -7,9 +7,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Non-root user — basic container security hygiene for production
+# Non-root user for security — but ownership of mounted volumes/disks has to be
+# fixed at container START (entrypoint.sh), not just here at build time. Render's
+# persistent disks and Docker's anonymous volumes both default to root ownership
+# on every fresh mount, which would otherwise block appuser from writing logs/DB.
 RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
+RUN chmod +x entrypoint.sh
 
 VOLUME ["/app/data", "/app/logs"]
 EXPOSE 8000
@@ -17,7 +20,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" || exit 1
 
-WORKDIR /app/api
-# Single worker: APScheduler runs in-process. Multiple workers would each run their
-# own scheduler and duplicate pipeline runs. See README "Scaling beyond one instance".
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Stays root here on purpose — entrypoint.sh fixes ownership then drops to
+# appuser itself before exec-ing uvicorn. See entrypoint.sh for why.
+ENTRYPOINT ["/app/entrypoint.sh"]
