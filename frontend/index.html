@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blackloom — On-chain data, woven clean</title>
+<link rel="icon" type="image/png" href="/assets/images/blackloom-logo.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+</head>
+<body>
+
+<div class="loom-bg">
+  <svg width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="loomGrid" width="42" height="42" patternUnits="userSpaceOnUse">
+        <path d="M0 0H42M0 0V42" stroke="var(--border)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#loomGrid)"/>
+    <path d="M -100 180 C 260 40, 640 340, 1000 120 S 1500 260, 1900 60" stroke="var(--thread-gold)" stroke-width="1.6" fill="none" opacity="0.55"/>
+    <path d="M -100 420 C 300 320, 700 560, 1100 380 S 1600 500, 1950 340" stroke="var(--thread-teal)" stroke-width="1.6" fill="none" opacity="0.45"/>
+  </svg>
+</div>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="brand">
+      <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="brand-fallback" style="display:none;">black<em>loom</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/why-blackloom.html">Why Blackloom</a>
+      <a href="/how-it-works.html">How it works</a>
+      <a href="/integrity-methodology.html">Integrity</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+      <a href="/dashboard.html" class="btn btn-primary btn-sm">Launch Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="section" style="padding-top:120px; padding-bottom:100px;">
+  <div class="container">
+    <div class="eyebrow">On-chain ETL &amp; analytics</div>
+    <h1 style="max-width:780px; margin-top:18px;">Raw chain data goes in loose.<br>It comes out <em>woven</em>.</h1>
+    <p class="lede" style="margin-top:22px;">
+      Blackloom pulls raw Ethereum transaction history, runs it through validation,
+      deduplication, and statistical scoring, and hands back a dataset you can trust —
+      with the math shown, not just a green checkmark.
+    </p>
+    <div style="display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;">
+      <a href="/dashboard.html" class="btn btn-primary">Open the dashboard</a>
+      <a href="/how-it-works.html" class="btn btn-ghost">See how it works</a>
+    </div>
+  </div>
+</header>
+
+<section class="section-tight" style="border-top:1px solid var(--border-soft);">
+  <div class="container grid-3">
+    <div class="card">
+      <div class="label">Pipeline</div>
+      <div class="value mono" style="font-size:1.3rem;">Extract → Transform → Load</div>
+      <p style="color:var(--text-muted); font-size:0.88rem; margin-top:10px;">Plus a quality and analytics pass on every run — not bolted on after.</p>
+    </div>
+    <div class="card">
+      <div class="label">Data quality</div>
+      <div class="value">99%+</div>
+      <p style="color:var(--text-muted); font-size:0.88rem; margin-top:10px;">Scored across four independent dimensions, weighted by what actually breaks a pipeline.</p>
+    </div>
+    <div class="card">
+      <div class="label">Automation</div>
+      <div class="value">Self-running</div>
+      <p style="color:var(--text-muted); font-size:0.88rem; margin-top:10px;">Scheduled runs, live status, anomaly detection — no one has to remember to click anything.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="eyebrow">The name</div>
+    <h2 style="margin-top:10px; max-width:640px;">A loom takes loose thread and gives back cloth.</h2>
+    <p class="lede" style="margin-top:16px;">
+      That's the whole idea. On-chain data arrives messy — duplicated, incomplete,
+      full of noise. Blackloom is the machine in between: it takes the raw thread
+      and weaves it into something structured enough to build on.
+    </p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand">
+          <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none';">
+        </div>
+        <p class="footer-tagline">On-chain ETL and analytics, woven clean.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/why-blackloom.html">Why Blackloom</a>
+        <a href="/how-it-works.html">How it works</a>
+        <a href="/integrity-methodology.html">Integrity methodology</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+    </div>
+    <div class="footer-quote">
+      Made with <span class="heart">♥</span> by <a href="https://github.com/goldy2307" target="_blank" rel="noopener">Goldy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/theme.js"></script>
+</body>
+</html>

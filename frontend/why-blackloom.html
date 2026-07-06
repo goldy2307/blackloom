@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Blackloom</title>
+<link rel="icon" type="image/png" href="/assets/images/blackloom-logo.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+</head>
+<body>
+
+<div class="loom-bg">
+  <svg width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="loomGrid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M0 0H42M0 0V42" stroke="var(--border)" stroke-width="1"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#loomGrid)"/>
+    <path d="M -100 300 C 300 150, 700 450, 1100 250 S 1600 380, 1950 200" stroke="var(--thread-teal)" stroke-width="1.6" fill="none" opacity="0.45"/>
+  </svg>
+</div>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="brand">
+      <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="brand-fallback" style="display:none;">black<em>loom</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/why-blackloom.html" class="active">Why Blackloom</a>
+      <a href="/how-it-works.html">How it works</a>
+      <a href="/integrity-methodology.html">Integrity</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+      <a href="/dashboard.html" class="btn btn-primary btn-sm">Launch Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="section" style="padding-top:80px; padding-bottom:40px;">
+  <div class="container">
+    <div class="eyebrow">Why Blackloom</div>
+    <h1 style="max-width:700px; margin-top:14px;">Most on-chain dashboards show you numbers. <em>Not where they came from.</em></h1>
+    <p class="lede" style="margin-top:20px;">
+      A chart is easy. Trusting the chart is the hard part. Blackloom exists because
+      "the dashboard says X" isn't an answer on its own — you need to know what got
+      dropped, what got deduplicated, and what's still uncertain.
+    </p>
+  </div>
+</header>
+
+<section class="section-tight">
+  <div class="container grid-3">
+    <div class="panel">
+      <h3>Raw chain data is not clean data</h3>
+      <p style="color:var(--text-muted); margin-top:10px; font-size:0.92rem;">
+        Paginated APIs return duplicates. Fields go missing. Values arrive in wei,
+        timestamps in unix epoch. None of that is usable until someone deals with it —
+        Blackloom deals with it the same way, every single run.
+      </p>
+    </div>
+    <div class="panel">
+      <h3>A single "integrity %" hides more than it shows</h3>
+      <p style="color:var(--text-muted); margin-top:10px; font-size:0.92rem;">
+        Completeness, uniqueness, validity, and freshness are different failure modes.
+        Collapsing them into one number tells you something broke, not what or how badly.
+        Blackloom scores each separately.
+      </p>
+    </div>
+    <div class="panel">
+      <h3>Automation only counts if it's actually automatic</h3>
+      <p style="color:var(--text-muted); margin-top:10px; font-size:0.92rem;">
+        A pipeline you have to remember to run isn't automated, it's a chore with extra
+        steps. Blackloom runs on its own schedule and reports its own health.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="border-top:1px solid var(--border-soft);">
+  <div class="container grid-2">
+    <div>
+      <div class="eyebrow">Who this is for</div>
+      <h2 style="margin-top:10px;">Anyone who needs to answer for the numbers, not just report them.</h2>
+    </div>
+    <div style="color:var(--text-muted); font-size:0.95rem;">
+      <p>Analysts building on-chain reporting who need to show their work. Engineers who
+      want a reference ETL pattern that handles validation and quality scoring properly
+      instead of skipping straight to charts. Anyone learning how a real pipeline —
+      extract, transform, load, quality, analytics — actually fits together end to end.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none';"></div>
+        <p class="footer-tagline">On-chain ETL and analytics, woven clean.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/why-blackloom.html">Why Blackloom</a>
+        <a href="/how-it-works.html">How it works</a>
+        <a href="/integrity-methodology.html">Integrity methodology</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+    </div>
+    <div class="footer-quote">Made with <span class="heart">♥</span> by <a href="https://github.com/goldy2307" target="_blank" rel="noopener">Goldy</a></div>
+  </div>
+</footer>
+
+<script src="/assets/js/theme.js"></script>
+</body>
+</html>

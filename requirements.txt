@@ -1,0 +1,12 @@
+pandas>=2.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+apscheduler>=3.10.4
+slowapi>=0.1.9
+prometheus-fastapi-instrumentator>=7.0.0
+pytest>=8.0.0
+openpyxl>=3.1.2
+reportlab>=4.1.0

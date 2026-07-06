@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Blackloom</title>
+<link rel="icon" type="image/png" href="/assets/images/blackloom-logo.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  .toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
+  .export-group { display:flex; gap:8px; margin-left:auto; }
+  #statusLine { color:var(--text-muted); font-size:0.85rem; }
+  canvas { max-width:100%; }
+</style>
+</head>
+<body>
+
+<div class="loom-bg">
+  <svg width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="loomGrid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M0 0H42M0 0V42" stroke="var(--border)" stroke-width="1"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#loomGrid)"/>
+  </svg>
+</div>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="brand">
+      <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="brand-fallback" style="display:none;">black<em>loom</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/why-blackloom.html">Why Blackloom</a>
+      <a href="/how-it-works.html">How it works</a>
+      <a href="/integrity-methodology.html">Integrity</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:36px; padding-bottom:60px;">
+
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-bottom:28px;">
+    <div>
+      <div class="eyebrow">Live pipeline</div>
+      <h1 style="font-size:2rem; margin-top:8px;">Dashboard</h1>
+    </div>
+    <span id="statusLine"></span>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-ghost btn-sm" onclick="runPipeline()" id="runBtn">Run now (override)</button>
+    <span id="runStatus" style="color:var(--text-muted); font-size:0.85rem;"></span>
+    <div class="export-group">
+      <a class="btn btn-ghost btn-sm" href="/api/export/csv" download>Export CSV</a>
+      <a class="btn btn-ghost btn-sm" href="/api/export/xlsx" download>Export XLSX</a>
+      <a class="btn btn-primary btn-sm" href="/api/export/pdf" download>Export PDF report</a>
+    </div>
+  </div>
+
+  <div class="grid-4" id="kpis" style="margin-bottom:24px;"></div>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="panel">
+      <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">Daily ETH volume</h3>
+      <canvas id="volumeChart" height="90"></canvas>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">Daily transaction count</h3>
+      <canvas id="countChart" height="90"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">Recent transactions</h3>
+    <div id="txTableWrap"><div class="empty">No data yet</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="panel">
+      <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">Anomaly detection (z-score &gt; 3)</h3>
+      <div id="anomalyWrap"><div class="empty">No anomalies flagged</div></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">Data quality score</h3>
+      <div id="qualityWrap"><div class="empty">Not generated yet</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin-bottom:14px; font-size:0.95rem; color:var(--text-muted); font-weight:600;">3-day volume forecast</h3>
+    <div id="forecastWrap"><div class="empty">Not enough history yet</div></div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none';"></div>
+        <p class="footer-tagline">On-chain ETL and analytics, woven clean.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/why-blackloom.html">Why Blackloom</a>
+        <a href="/how-it-works.html">How it works</a>
+        <a href="/integrity-methodology.html">Integrity methodology</a>
+      </div>
+    </div>
+    <div class="footer-quote">Made with <span class="heart">♥</span> by <a href="https://github.com/goldy2307" target="_blank" rel="noopener">Goldy</a></div>
+  </div>
+</footer>
+
+<script src="/assets/js/theme.js"></script>
+<script src="/assets/js/dashboard.js"></script>
+</body>
+</html>

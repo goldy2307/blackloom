@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How it works — Blackloom</title>
+<link rel="icon" type="image/png" href="/assets/images/blackloom-logo.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<style>
+  .stage { display:grid; grid-template-columns: 60px 1fr; gap:24px; padding:32px 0; border-bottom:1px solid var(--border-soft); }
+  .stage:last-child { border-bottom:none; }
+  .stage-line { display:flex; flex-direction:column; align-items:center; }
+  .stage-dot { width:12px; height:12px; border-radius:50%; background:var(--thread-gold); margin-top:6px; }
+  .stage-thread { width:1px; flex:1; background:var(--border); margin-top:8px; }
+  .stage-file { font-family: var(--font-mono); font-size:0.78rem; color:var(--thread-teal-bright); background:var(--bg-elevated-2); padding:3px 10px; border-radius:20px; display:inline-block; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="loom-bg">
+  <svg width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="loomGrid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M0 0H42M0 0V42" stroke="var(--border)" stroke-width="1"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#loomGrid)"/>
+  </svg>
+</div>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="brand">
+      <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="brand-fallback" style="display:none;">black<em>loom</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/why-blackloom.html">Why Blackloom</a>
+      <a href="/how-it-works.html" class="active">How it works</a>
+      <a href="/integrity-methodology.html">Integrity</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+      <a href="/dashboard.html" class="btn btn-primary btn-sm">Launch Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="section" style="padding-top:80px; padding-bottom:20px;">
+  <div class="container">
+    <div class="eyebrow">How it works</div>
+    <h1 style="max-width:700px; margin-top:14px;">Five stages. Same order, every run.</h1>
+    <p class="lede" style="margin-top:18px;">
+      This is a real sequence, not a diagram for decoration — each stage reads the
+      previous stage's output file and can't run out of order.
+    </p>
+  </div>
+</header>
+
+<section class="section-tight">
+  <div class="container">
+
+    <div class="stage">
+      <div class="stage-line"><span class="stage-num">01</span><div class="stage-thread"></div></div>
+      <div>
+        <h3>Extract</h3>
+        <p style="color:var(--text-muted); margin-top:8px; font-size:0.92rem; max-width:600px;">
+          Pulls raw transaction history — either from Etherscan's live API or a synthetic
+          generator for testing — and writes it untouched. Nothing is cleaned here on
+          purpose: the raw file is always available to debug against.
+        </p>
+        <span class="stage-file">src/extract.py → data/raw/transactions.json</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-line"><span class="stage-num">02</span><div class="stage-thread"></div></div>
+      <div>
+        <h3>Transform</h3>
+        <p style="color:var(--text-muted); margin-top:8px; font-size:0.92rem; max-width:600px;">
+          Validates every row against a required schema, drops what's incomplete,
+          deduplicates on transaction hash, and converts wei → ETH and unix time → readable
+          timestamps. This is also where the integrity percentage is actually computed.
+        </p>
+        <span class="stage-file">src/transform.py → data/processed/transactions_clean.csv</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-line"><span class="stage-num">03</span><div class="stage-thread"></div></div>
+      <div>
+        <h3>Load</h3>
+        <p style="color:var(--text-muted); margin-top:8px; font-size:0.92rem; max-width:600px;">
+          Writes clean rows into an indexed SQLite table — indexes on address, block, and
+          time mean filtered queries don't scan the whole table. Also builds the daily
+          summary view the dashboard reads from.
+        </p>
+        <span class="stage-file">src/load.py → data/processed/onchain.db</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-line"><span class="stage-num">04</span><div class="stage-thread"></div></div>
+      <div>
+        <h3>Quality</h3>
+        <p style="color:var(--text-muted); margin-top:8px; font-size:0.92rem; max-width:600px;">
+          Scores the run across four independent dimensions — see the
+          <a href="/integrity-methodology.html">integrity methodology</a> page for the exact
+          formula — instead of collapsing everything into one vague percentage.
+        </p>
+        <span class="stage-file">src/quality.py → data/processed/quality_report.json</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-line"><span class="stage-num">05</span></div>
+      <div>
+        <h3>Analytics</h3>
+        <p style="color:var(--text-muted); margin-top:8px; font-size:0.92rem; max-width:600px;">
+          Flags statistical outliers by z-score, computes a 7-day rolling trend, and
+          fits a least-squares regression to forecast the next 3 days of volume. Simple
+          methods, chosen deliberately — explainable beats clever for a baseline.
+        </p>
+        <span class="stage-file">src/analytics.py → data/processed/analytics.json</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section" style="border-top:1px solid var(--border-soft);">
+  <div class="container">
+    <div class="eyebrow">Underneath</div>
+    <h2 style="margin-top:10px;">One scheduler, no manual steps</h2>
+    <p class="lede" style="margin-top:14px;">
+      An APScheduler job runs stage 1 through 5 once on boot, then again on a fixed
+      interval, forever. Every run writes a status file — that's what the dashboard's
+      "last run / next run" line is reading. Nobody has to remember to click anything.
+    </p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none';"></div>
+        <p class="footer-tagline">On-chain ETL and analytics, woven clean.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/why-blackloom.html">Why Blackloom</a>
+        <a href="/how-it-works.html">How it works</a>
+        <a href="/integrity-methodology.html">Integrity methodology</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+    </div>
+    <div class="footer-quote">Made with <span class="heart">♥</span> by <a href="https://github.com/goldy2307" target="_blank" rel="noopener">Goldy</a></div>
+  </div>
+</footer>
+
+<script src="/assets/js/theme.js"></script>
+</body>
+</html>

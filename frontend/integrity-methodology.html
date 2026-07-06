@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integrity methodology — Blackloom</title>
+<link rel="icon" type="image/png" href="/assets/images/blackloom-logo.png">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<style>
+  .formula { font-family: var(--font-mono); background: var(--bg-elevated-2); border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 18px 20px; font-size: 0.88rem; overflow-x:auto; }
+  .dim-row { display:grid; grid-template-columns: 160px 90px 1fr; gap:16px; align-items:start; padding:16px 0; border-bottom:1px solid var(--border-soft); }
+  .dim-row:last-child { border-bottom:none; }
+  .dim-weight { font-family:var(--font-mono); color:var(--thread-gold-bright); font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="loom-bg">
+  <svg width="100%" height="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="loomGrid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M0 0H42M0 0V42" stroke="var(--border)" stroke-width="1"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#loomGrid)"/>
+  </svg>
+</div>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="brand">
+      <img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="brand-fallback" style="display:none;">black<em>loom</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/why-blackloom.html">Why Blackloom</a>
+      <a href="/how-it-works.html">How it works</a>
+      <a href="/integrity-methodology.html" class="active">Integrity</a>
+    </div>
+    <div class="nav-right">
+      <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+      <a href="/dashboard.html" class="btn btn-primary btn-sm">Launch Dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="section" style="padding-top:80px; padding-bottom:20px;">
+  <div class="container">
+    <div class="eyebrow">Integrity methodology</div>
+    <h1 style="max-width:700px; margin-top:14px;">How the 99%+ number is actually calculated</h1>
+    <p class="lede" style="margin-top:18px;">
+      Not a vibe. Not a placeholder. Here's the exact formula Blackloom runs on every
+      pipeline execution, and why it's built this way.
+    </p>
+  </div>
+</header>
+
+<section class="section-tight">
+  <div class="container grid-2">
+    <div>
+      <h2>Four dimensions, not one score</h2>
+      <p style="color:var(--text-muted); margin-top:14px; font-size:0.95rem;">
+        Real data-quality platforms — Great Expectations, Monte Carlo — score pipelines
+        on independent axes because a single "integrity %" hides <em>which kind</em> of
+        problem you have. Blackloom does the same: four scores, each computed separately,
+        then combined with weights that reflect what actually breaks a pipeline in
+        production.
+      </p>
+    </div>
+    <div class="panel">
+      <div class="dim-row">
+        <div>Completeness</div><div class="dim-weight">30%</div>
+        <div style="color:var(--text-muted); font-size:0.88rem;">Fraction of raw rows that still have every required field after validation.</div>
+      </div>
+      <div class="dim-row">
+        <div>Uniqueness</div><div class="dim-weight">20%</div>
+        <div style="color:var(--text-muted); font-size:0.88rem;">Fraction of rows that are not duplicates, by transaction hash.</div>
+      </div>
+      <div class="dim-row">
+        <div>Validity</div><div class="dim-weight">35%</div>
+        <div style="color:var(--text-muted); font-size:0.88rem;">Fraction passing business rules — value ≥ 0, gas price &gt; 0, block number &gt; 0.</div>
+      </div>
+      <div class="dim-row">
+        <div>Timeliness</div><div class="dim-weight">15%</div>
+        <div style="color:var(--text-muted); font-size:0.88rem;">How fresh the newest record is. Decays linearly to 0% at 30 days old.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="border-top:1px solid var(--border-soft);">
+  <div class="container">
+    <div class="eyebrow">The exact formula</div>
+    <h2 style="margin-top:10px;">overall_score = Σ (dimension_score × weight)</h2>
+    <div class="formula" style="margin-top:24px;">
+completeness  = valid_rows / raw_rows × 100
+uniqueness    = (1 − duplicate_rows / total_rows) × 100
+validity      = rows_passing_business_rules / total_rows × 100
+timeliness    = max(0, 100 − (hours_since_newest_record / 720) × 100)
+
+overall_score = completeness × 0.30
+              + uniqueness   × 0.20
+              + validity     × 0.35
+              + timeliness   × 0.15
+    </div>
+    <p style="color:var(--text-muted); margin-top:20px; font-size:0.9rem; max-width:640px;">
+      Validity carries the heaviest weight (35%) because bad values — negative amounts,
+      impossible gas prices — are the failure mode most likely to silently corrupt
+      downstream analysis. Completeness is second because missing fields can't be
+      recovered after the fact. This is exactly the logic implemented in
+      <code class="mono">src/quality.py</code> — nothing here is simplified for the page.
+    </p>
+  </div>
+</section>
+
+<section class="section-tight" style="border-top:1px solid var(--border-soft);">
+  <div class="container">
+    <div class="eyebrow">Worked example</div>
+    <h3 style="margin-top:10px;">A real run, from actual pipeline output</h3>
+    <div class="formula" style="margin-top:18px;">
+raw_rows = 1024, valid_rows = 1023   →  completeness = 99.90%
+duplicates = 20 of 1023 rows         →  uniqueness   = 98.04%
+all values ≥ 0, gas &gt; 0, block &gt; 0    →  validity      = 100.00%
+newest record 2 hours old            →  timeliness    = 99.72%
+
+overall = 99.90(.30) + 98.04(.20) + 100.00(.35) + 99.72(.15)
+        = 29.97 + 19.61 + 35.00 + 14.96
+        = 99.54%
+    </div>
+    <p style="color:var(--text-muted); margin-top:18px; font-size:0.9rem;">
+      That's a real number from a real run, not a rounded-up marketing figure — see it
+      live on the <a href="/dashboard.html">dashboard</a>, recalculated every scheduled run.
+    </p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand"><img data-logo src="/assets/images/blackloom-light.png" alt="Blackloom" onerror="this.style.display='none';"></div>
+        <p class="footer-tagline">On-chain ETL and analytics, woven clean.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/why-blackloom.html">Why Blackloom</a>
+        <a href="/how-it-works.html">How it works</a>
+        <a href="/integrity-methodology.html">Integrity methodology</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+    </div>
+    <div class="footer-quote">Made with <span class="heart">♥</span> by <a href="https://github.com/goldy2307" target="_blank" rel="noopener">Goldy</a></div>
+  </div>
+</footer>
+
+<script src="/assets/js/theme.js"></script>
+</body>
+</html>

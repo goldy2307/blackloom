@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+      - name: Run pipeline smoke test
+        run: python src/main.py   # fails the build if the pipeline itself breaks
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t onchain-etl:ci-test .
+
+      # To actually deploy on every merge, add steps here to push the image
+      # to a registry (Docker Hub / GHCR / ECR) and trigger your host to pull it.
+      # That part needs your registry credentials as GitHub secrets — can't be
+      # wired up without an account, so it's left as the next manual step.
