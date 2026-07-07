@@ -13,14 +13,11 @@ to compute — the right tool before reaching for anything heavier.
 Output: data/processed/analytics.json — the API and dashboard both read this.
 """
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent.parent
-CLEAN_PATH = ROOT / "data" / "processed" / "transactions_clean.csv"
-OUT_PATH = ROOT / "data" / "processed" / "analytics.json"
+from tenant import tenant_paths
 
 Z_THRESHOLD = 3.0  # standard cutoff: |z| > 3 = statistically unusual (~0.3% under normality)
 
@@ -85,8 +82,9 @@ def top_wallets(df: pd.DataFrame, n: int = 10) -> list:
     return [{"wallet": w, "total_eth_sent": round(v, 4)} for w, v in vol.items()]
 
 
-def run() -> dict:
-    df = pd.read_csv(CLEAN_PATH)
+def run(client_id: str | None = None) -> dict:
+    paths = tenant_paths(client_id)
+    df = pd.read_csv(paths["clean"])
 
     daily = daily_trend(df)
     result = {
@@ -97,9 +95,9 @@ def run() -> dict:
         "trend_direction": "up" if len(daily) >= 2 and daily["volume"].iloc[-1] >= daily["volume"].iloc[0] else "down",
     }
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(result, indent=2))
-    print(f"[ANALYTICS] anomalies={len(result['anomalies'])} | forecast_days={len(result['forecast'])} | saved -> {OUT_PATH}")
+    paths["analytics"].parent.mkdir(parents=True, exist_ok=True)
+    paths["analytics"].write_text(json.dumps(result, indent=2))
+    print(f"[ANALYTICS] client={client_id or 'default'} anomalies={len(result['anomalies'])} | forecast_days={len(result['forecast'])} | saved -> {paths['analytics']}")
     return result
 
 

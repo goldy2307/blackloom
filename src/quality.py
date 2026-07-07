@@ -13,14 +13,10 @@ pipeline in production (validity and completeness matter most).
 """
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent.parent
-CLEAN_PATH = ROOT / "data" / "processed" / "transactions_clean.csv"
-RAW_PATH = ROOT / "data" / "raw" / "transactions.json"
-OUT_PATH = ROOT / "data" / "processed" / "quality_report.json"
+from tenant import tenant_paths
 
 WEIGHTS = {"completeness": 0.3, "uniqueness": 0.2, "validity": 0.35, "timeliness": 0.15}
 
@@ -55,13 +51,12 @@ def timeliness_score(df: pd.DataFrame) -> float:
     return round(max(0, 100 - (age_hours / (30 * 24)) * 100), 2)
 
 
-def run() -> dict:
-    with open(RAW_PATH) as f:
+def run(client_id: str | None = None) -> dict:
+    paths = tenant_paths(client_id)
+    with open(paths["raw"]) as f:
         raw_count = len(json.load(f))
 
-    # transaction_clean.csv columns differ from the pre-rename version used at load time;
-    # read here for scoring purposes only (doesn't touch the actual DB load)
-    df = pd.read_csv(CLEAN_PATH)
+    df = pd.read_csv(paths["clean"])
 
     scores = {
         "completeness": completeness_score(raw_count, len(df)),
@@ -80,9 +75,9 @@ def run() -> dict:
         "clean_row_count": len(df),
     }
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(report, indent=2))
-    print(f"[QUALITY] overall_score={overall}% | breakdown={scores}")
+    paths["quality"].parent.mkdir(parents=True, exist_ok=True)
+    paths["quality"].write_text(json.dumps(report, indent=2))
+    print(f"[QUALITY] client={client_id or 'default'} overall_score={overall}% | breakdown={scores}")
     return report
 
 

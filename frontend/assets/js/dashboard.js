@@ -1,6 +1,31 @@
 const API = "";
 let volumeChart, countChart;
 
+/* ---------------------------------------------------------------
+   Tenant identity: a random token this browser holds, no login.
+   "useOwnData" flag decides whether we send it on requests (true)
+   or view the shared demo dataset (false, the default for new visitors).
+--------------------------------------------------------------- */
+const CLIENT_ID_KEY = "blackloom-client-id";
+const USE_OWN_DATA_KEY = "blackloom-use-own-data";
+
+function getOrCreateClientId() {
+  let id = localStorage.getItem(CLIENT_ID_KEY);
+  if (!id) {
+    id = "u" + crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+    localStorage.setItem(CLIENT_ID_KEY, id);
+  }
+  return id;
+}
+
+function usingOwnData() {
+  return localStorage.getItem(USE_OWN_DATA_KEY) === "true";
+}
+
+function authHeaders() {
+  return usingOwnData() ? { "X-Client-ID": getOrCreateClientId() } : {};
+}
+
 function themeColor(varName) {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
 }
@@ -10,11 +35,108 @@ function fmtTime(iso) {
   return new Date(iso).toLocaleString();
 }
 
+/* ---------------------------------------------------------------
+   Config panel — "Connect your own wallet"
+--------------------------------------------------------------- */
+function toggleConfigPanel() {
+  const panel = document.getElementById("configPanel");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
+
+function viewDemoData() {
+  localStorage.setItem(USE_OWN_DATA_KEY, "false");
+  updateDataSourceBanner();
+  loadAll();
+}
+
+function updateDataSourceBanner() {
+  const isOwn = usingOwnData();
+  document.getElementById("dataSourceLabel").textContent = isOwn ? "Viewing: your data" : "Viewing: demo data";
+  document.getElementById("viewDemoBtn").style.display = isOwn ? "inline-flex" : "none";
+}
+
+async function loadSavedConfig() {
+  if (!usingOwnData()) return;
+  try {
+    const cfg = await fetch(`${API}/api/config`, { headers: authHeaders() }).then((r) => r.json());
+    if (cfg.configured) {
+      document.getElementById("cfgDataSource").value = cfg.data_source;
+      document.getElementById("cfgChainId").value = cfg.chain_id || "1";
+      document.getElementById("cfgWallet").value = cfg.wallet_address || "";
+      if (cfg.etherscan_api_key_masked) {
+        document.getElementById("cfgApiKey").placeholder = `saved (${cfg.etherscan_api_key_masked})`;
+      }
+    }
+  } catch (e) { /* not configured yet */ }
+}
+
+async function saveConfig() {
+  const btn = document.getElementById("saveConfigBtn");
+  const statusEl = document.getElementById("configStatus");
+  btn.disabled = true;
+  statusEl.textContent = "Saving and running your pipeline...";
+
+  const clientId = getOrCreateClientId();
+  const body = {
+    data_source: document.getElementById("cfgDataSource").value,
+    chain_id: document.getElementById("cfgChainId").value || "1",
+    wallet_address: document.getElementById("cfgWallet").value.trim() || null,
+    etherscan_api_key: document.getElementById("cfgApiKey").value.trim() || null,
+  };
+
+  try {
+    const res = await fetch(`${API}/api/config`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Client-ID": clientId },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Save failed");
+
+    localStorage.setItem(USE_OWN_DATA_KEY, "true");
+    updateDataSourceBanner();
+    statusEl.textContent = `Done — ${data.run_result.rows_loaded} rows loaded, ${data.run_result.integrity_pct}% integrity.`;
+    await loadAll();
+  } catch (e) {
+    statusEl.textContent = "Failed: " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Exports — JS fetch + blob, since custom headers can't ride on
+   a plain <a href download> link.
+--------------------------------------------------------------- */
+async function exportFile(kind) {
+  const mimeExt = { csv: "csv", xlsx: "xlsx", pdf: "pdf" };
+  try {
+    const res = await fetch(`${API}/api/export/${kind}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `blackloom-export.${mimeExt[kind]}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    document.getElementById("runStatus").textContent = "Export failed — run the pipeline first";
+  }
+}
+
+/* ---------------------------------------------------------------
+   Data loading + rendering
+--------------------------------------------------------------- */
 async function loadStatus() {
   try {
-    const s = await fetch(`${API}/api/status`).then((r) => r.json());
+    const s = await fetch(`${API}/api/status`, { headers: authHeaders() }).then((r) => r.json());
     const last = s.last_run;
-    let line = `Auto-refresh every ${s.interval_minutes} min · Next run: ${fmtTime(s.next_run_at)}`;
+    let line = s.is_tenant
+      ? "Your data — runs when you save config or click Run now"
+      : `Auto-refresh every ${s.interval_minutes} min · Next run: ${fmtTime(s.next_run_at)}`;
     if (last) {
       line += last.success
         ? ` · Last run OK — ${last.rows_loaded} rows, ${last.integrity_pct}% integrity`
@@ -25,23 +147,27 @@ async function loadStatus() {
 }
 
 async function loadAll() {
+  const headers = authHeaders();
   try {
     const [stats, summary, txs] = await Promise.all([
-      fetch(`${API}/api/stats`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
-      fetch(`${API}/api/summary`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
-      fetch(`${API}/api/transactions?limit=15`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+      fetch(`${API}/api/stats`, { headers }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+      fetch(`${API}/api/summary`, { headers }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+      fetch(`${API}/api/transactions?limit=15`, { headers }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
     ]);
     renderKpis(stats);
     renderCharts(summary);
     renderTable(txs);
+    document.getElementById("runStatus").textContent = "";
   } catch (e) {
-    document.getElementById("runStatus").textContent = "Waiting for first run...";
+    document.getElementById("runStatus").textContent = usingOwnData()
+      ? "No data yet — save your config above to run your first pipeline"
+      : "Waiting for first run...";
   }
 
   try {
     const [analytics, quality] = await Promise.all([
-      fetch(`${API}/api/analytics`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
-      fetch(`${API}/api/quality`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+      fetch(`${API}/api/analytics`, { headers }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+      fetch(`${API}/api/quality`, { headers }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
     ]);
     renderAnomalies(analytics.anomalies);
     renderForecast(analytics.forecast, analytics.trend_direction);
@@ -156,16 +282,18 @@ async function runPipeline() {
   btn.disabled = true;
   document.getElementById("runStatus").textContent = "Running...";
   try {
-    const res = await fetch(`${API}/api/run-pipeline`, { method: "POST" });
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetch(`${API}/api/run-pipeline`, { method: "POST", headers: authHeaders() });
+    if (!res.ok) throw new Error((await res.json()).detail || "failed");
     document.getElementById("runStatus").textContent = "Done — refreshing";
     await loadAll();
   } catch (e) {
-    document.getElementById("runStatus").textContent = "Failed — check logs";
+    document.getElementById("runStatus").textContent = "Failed: " + e.message;
   } finally {
     btn.disabled = false;
   }
 }
 
+updateDataSourceBanner();
+loadSavedConfig();
 loadAll();
 setInterval(loadAll, 30000);

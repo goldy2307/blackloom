@@ -50,13 +50,57 @@
     <span id="statusLine"></span>
   </div>
 
+  <div class="panel" id="dataSourceBanner" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div style="font-size:0.9rem; font-weight:600;" id="dataSourceLabel">Viewing: demo data</div>
+      <div style="color:var(--text-muted); font-size:0.8rem; margin-top:2px;">No login — your config is a private token stored in this browser only.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="toggleConfigPanel()">Connect your own wallet</button>
+      <button class="btn btn-ghost btn-sm" id="viewDemoBtn" onclick="viewDemoData()" style="display:none;">View demo data</button>
+    </div>
+  </div>
+
+  <div class="panel" id="configPanel" style="margin-bottom:24px; display:none;">
+    <h3 style="margin-bottom:6px; font-size:0.95rem;">Connect your own wallet</h3>
+    <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:16px;">
+      Runs the same pipeline against your own Ethereum wallet. Stored under a private
+      token in your browser, isolated from every other visitor — not a real account system.
+    </p>
+    <div class="grid-2" style="gap:14px;">
+      <div>
+        <label style="font-size:0.8rem; color:var(--text-muted);">Data source</label>
+        <select id="cfgDataSource" style="width:100%; margin-top:4px; padding:8px; background:var(--bg-elevated-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">
+          <option value="mock">Mock data (no key needed)</option>
+          <option value="real">Real Ethereum data (Etherscan)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.8rem; color:var(--text-muted);">Chain ID</label>
+        <input id="cfgChainId" value="1" style="width:100%; margin-top:4px; padding:8px; background:var(--bg-elevated-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; color:var(--text-muted);">Etherscan API key</label>
+        <input id="cfgApiKey" type="password" placeholder="only needed for real data" style="width:100%; margin-top:4px; padding:8px; background:var(--bg-elevated-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; color:var(--text-muted);">Wallet address</label>
+        <input id="cfgWallet" placeholder="0x..." style="width:100%; margin-top:4px; padding:8px; background:var(--bg-elevated-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">
+      </div>
+    </div>
+    <div style="margin-top:16px; display:flex; align-items:center; gap:12px;">
+      <button class="btn btn-primary btn-sm" onclick="saveConfig()" id="saveConfigBtn">Save &amp; run</button>
+      <span id="configStatus" style="color:var(--text-muted); font-size:0.85rem;"></span>
+    </div>
+  </div>
+
   <div class="toolbar">
     <button class="btn btn-ghost btn-sm" onclick="runPipeline()" id="runBtn">Run now (override)</button>
     <span id="runStatus" style="color:var(--text-muted); font-size:0.85rem;"></span>
     <div class="export-group">
-      <a class="btn btn-ghost btn-sm" href="/api/export/csv" download>Export CSV</a>
-      <a class="btn btn-ghost btn-sm" href="/api/export/xlsx" download>Export XLSX</a>
-      <a class="btn btn-primary btn-sm" href="/api/export/pdf" download>Export PDF report</a>
+      <button class="btn btn-ghost btn-sm" onclick="exportFile('csv')">Export CSV</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportFile('xlsx')">Export XLSX</button>
+      <button class="btn btn-primary btn-sm" onclick="exportFile('pdf')">Export PDF report</button>
     </div>
   </div>
 

@@ -7,17 +7,15 @@ Job: raw JSON -> clean pandas DataFrame.
   4. compute data-integrity % (this is where the "99.9% integrity" resume metric comes from)
 """
 import json
-from pathlib import Path
 import pandas as pd
 
+from tenant import tenant_paths
+
 REQUIRED_COLS = ["hash", "from", "to", "value", "gas", "gasPrice", "timeStamp", "blockNumber"]
-ROOT = Path(__file__).resolve().parent.parent
-RAW_PATH = ROOT / "data" / "raw" / "transactions.json"
-CLEAN_PATH = ROOT / "data" / "processed" / "transactions_clean.csv"
 
 
-def load_raw():
-    with open(RAW_PATH) as f:
+def load_raw(raw_path):
+    with open(raw_path) as f:
         return pd.DataFrame(json.load(f))
 
 
@@ -48,16 +46,17 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     return df[keep], dupes_removed
 
 
-def run():
-    raw_df = load_raw()
+def run(client_id: str | None = None):
+    paths = tenant_paths(client_id)
+    raw_df = load_raw(paths["raw"])
     valid_df, integrity_pct = validate_schema(raw_df)
     clean_df, dupes_removed = transform(valid_df)
 
-    CLEAN_PATH.parent.mkdir(parents=True, exist_ok=True)
-    clean_df.to_csv(CLEAN_PATH, index=False)
+    paths["clean"].parent.mkdir(parents=True, exist_ok=True)
+    clean_df.to_csv(paths["clean"], index=False)
     print(
-        f"[TRANSFORM] raw_rows={len(raw_df)} | valid_rows={len(valid_df)} | "
-        f"dupes_removed={dupes_removed} | integrity={integrity_pct}% | saved -> {CLEAN_PATH}"
+        f"[TRANSFORM] client={client_id or 'default'} raw_rows={len(raw_df)} | valid_rows={len(valid_df)} | "
+        f"dupes_removed={dupes_removed} | integrity={integrity_pct}% | saved -> {paths['clean']}"
     )
     return clean_df, integrity_pct
 

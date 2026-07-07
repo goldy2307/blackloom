@@ -19,9 +19,9 @@ import transform
 import load
 import analytics
 import quality
+from tenant import tenant_paths
 
 ROOT = Path(__file__).resolve().parent.parent
-STATUS_PATH = ROOT / "data" / "processed" / "status.json"
 LOG_DIR = ROOT / "logs"
 
 handlers = [logging.StreamHandler()]
@@ -41,18 +41,28 @@ logging.basicConfig(
 log = logging.getLogger("etl")
 
 
-def run_pipeline() -> dict:
-    """Runs extract -> transform -> load. Always writes status.json, never raises."""
+def run_pipeline(client_id: str | None = None, config: dict | None = None) -> dict:
+    """
+    Runs extract -> transform -> load -> quality -> analytics. Always writes
+    status.json, never raises out of this function.
+
+    client_id: if given, runs entirely inside that tenant's isolated data
+    folder instead of the shared default one (see src/tenant.py).
+    config: per-tenant overrides (etherscan_api_key, wallet_address, chain_id,
+    data_source) — only meaningful together with a client_id.
+    """
     t0 = time.time()
     status = {"started_at": datetime.now(timezone.utc).isoformat()}
+    status_path = tenant_paths(client_id)["status"]
+    log_prefix = f"[{client_id or 'default'}] "
 
     try:
-        log.info("Pipeline run starting")
-        extract.run()
-        clean_df, integrity_pct = transform.run()
-        load.run()
-        quality_report = quality.run()
-        analytics_result = analytics.run()
+        log.info(log_prefix + "Pipeline run starting")
+        extract.run(client_id, config)
+        clean_df, integrity_pct = transform.run(client_id)
+        load.run(client_id)
+        quality_report = quality.run(client_id)
+        analytics_result = analytics.run(client_id)
 
         status.update({
             "success": True,
@@ -65,7 +75,7 @@ def run_pipeline() -> dict:
             "error": None,
         })
         log.info(
-            f"Pipeline run OK | rows={len(clean_df)} integrity={integrity_pct}% "
+            log_prefix + f"Pipeline run OK | rows={len(clean_df)} integrity={integrity_pct}% "
             f"quality={quality_report['overall_score']}% anomalies={len(analytics_result['anomalies'])}"
         )
 
@@ -76,10 +86,10 @@ def run_pipeline() -> dict:
             "duration_sec": round(time.time() - t0, 2),
             "error": str(e),
         })
-        log.error(f"Pipeline run FAILED: {e}\n{traceback.format_exc()}")
+        log.error(log_prefix + f"Pipeline run FAILED: {e}\n{traceback.format_exc()}")
 
-    STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATUS_PATH.write_text(json.dumps(status, indent=2))
+    status_path.parent.mkdir(parents=True, exist_ok=True)
+    status_path.write_text(json.dumps(status, indent=2))
     return status
 
 

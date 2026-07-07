@@ -22,9 +22,10 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = ROOT / "data" / "processed" / "onchain.db"
-ANALYTICS_PATH = ROOT / "data" / "processed" / "analytics.json"
-QUALITY_PATH = ROOT / "data" / "processed" / "quality_report.json"
+SRC_DIR = ROOT / "src"
+import sys  # noqa: E402
+sys.path.insert(0, str(SRC_DIR))
+from tenant import tenant_paths  # noqa: E402
 
 # brand colors, matched to frontend/assets/css/theme.css
 INK = colors.HexColor("#0b0d10")
@@ -34,29 +35,30 @@ MUTED = colors.HexColor("#5b5f66")
 LIGHT_ROW = colors.HexColor("#f2efe7")
 
 
-def _load_data():
-    conn = sqlite3.connect(DB_PATH)
+def _load_data(client_id: str | None = None):
+    paths = tenant_paths(client_id)
+    conn = sqlite3.connect(paths["db"])
     summary = pd.read_sql("SELECT * FROM daily_summary ORDER BY day ASC", conn)
     transactions = pd.read_sql("SELECT * FROM transactions ORDER BY tx_time DESC", conn)
     conn.close()
 
-    analytics = json.loads(ANALYTICS_PATH.read_text()) if ANALYTICS_PATH.exists() else {}
-    quality = json.loads(QUALITY_PATH.read_text()) if QUALITY_PATH.exists() else {}
+    analytics = json.loads(paths["analytics"].read_text()) if paths["analytics"].exists() else {}
+    quality = json.loads(paths["quality"].read_text()) if paths["quality"].exists() else {}
     return summary, transactions, analytics, quality
 
 
 # ---------------------------------------------------------------- CSV
-def build_csv() -> bytes:
+def build_csv(client_id: str | None = None) -> bytes:
     """Flat CSV: transaction-level data, the most re-usable shape for further analysis."""
-    _, transactions, _, _ = _load_data()
+    _, transactions, _, _ = _load_data(client_id)
     buf = io.StringIO()
     transactions.to_csv(buf, index=False)
     return buf.getvalue().encode("utf-8")
 
 
 # ---------------------------------------------------------------- XLSX
-def build_xlsx() -> bytes:
-    summary, transactions, analytics, quality = _load_data()
+def build_xlsx(client_id: str | None = None) -> bytes:
+    summary, transactions, analytics, quality = _load_data(client_id)
 
     wb = Workbook()
 
@@ -150,8 +152,8 @@ def build_xlsx() -> bytes:
 
 
 # ---------------------------------------------------------------- PDF
-def build_pdf() -> bytes:
-    summary, transactions, analytics, quality = _load_data()
+def build_pdf(client_id: str | None = None) -> bytes:
+    summary, transactions, analytics, quality = _load_data(client_id)
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=22 * mm, bottomMargin=18 * mm,
                              leftMargin=18 * mm, rightMargin=18 * mm)

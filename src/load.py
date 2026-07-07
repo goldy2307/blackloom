@@ -7,24 +7,25 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
+from tenant import tenant_paths
+
 ROOT = Path(__file__).resolve().parent.parent
-CLEAN_PATH = ROOT / "data" / "processed" / "transactions_clean.csv"
-DB_PATH = ROOT / "data" / "processed" / "onchain.db"
 SCHEMA_PATH = ROOT / "sql" / "schema.sql"
-POWERBI_EXPORT = ROOT / "data" / "processed" / "daily_summary_for_powerbi.csv"
 
 
-def run():
-    conn = sqlite3.connect(DB_PATH)
+def run(client_id: str | None = None):
+    paths = tenant_paths(client_id)
+    paths["db"].parent.mkdir(parents=True, exist_ok=True)
+
+    conn = sqlite3.connect(paths["db"])
     cur = conn.cursor()
 
     with open(SCHEMA_PATH) as f:
         cur.executescript(f.read())
 
-    df = pd.read_csv(CLEAN_PATH)
+    df = pd.read_csv(paths["clean"])
     df = df.rename(columns={"from": "from_address", "to": "to_address", "blockNumber": "block_number"})
 
-    # INSERT OR IGNORE = idempotent load, re-running pipeline won't create duplicate rows
     rows = df.to_dict("records")
     cur.executemany(
         """INSERT OR IGNORE INTO transactions
@@ -37,10 +38,10 @@ def run():
     row_count = cur.execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
 
     summary_df = pd.read_sql("SELECT * FROM daily_summary", conn)
-    summary_df.to_csv(POWERBI_EXPORT, index=False)
+    summary_df.to_csv(paths["powerbi"], index=False)
 
     conn.close()
-    print(f"[LOAD] rows_in_db={row_count} | powerbi_export -> {POWERBI_EXPORT}")
+    print(f"[LOAD] client={client_id or 'default'} rows_in_db={row_count} | powerbi_export -> {paths['powerbi']}")
 
 
 if __name__ == "__main__":
